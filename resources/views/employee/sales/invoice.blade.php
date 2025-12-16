@@ -2,22 +2,45 @@
 
 @section('content')
 <div class="container-xxl py-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h1 class="h5 mb-0">{{ __('Invoice') }} {{ $sale->invoice_no }}</h1>
-        <a class="btn btn-outline-secondary" onclick="window.print()">Print</a>
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <h1 class="h3 fw-bold mb-1 text-body">
+                Invoice #{{ $sale->invoice_no }}
+                @php
+                $badge = match($sale->status){
+                'paid' => 'bg-success-subtle text-success-emphasis border border-success-subtle',
+                'draft'=> 'bg-warning-subtle text-warning-emphasis border border-warning-subtle',
+                'void' => 'bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle',
+                default=> 'bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle'
+                };
+                @endphp
+                <span class="badge {{ $badge }} fs-6 ms-2 align-middle rounded-pill fw-normal">
+                    {{ ucfirst($sale->status) }}
+                </span>
+            </h1>
+
+            <p class="text-secondary mb-0">
+                {{ $sale->created_at->format('d M Y, H:i') }} &bull; Cashier: {{ $sale->user->name ?? '-' }}
+            </p>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a href="{{ route('employee.sales.history.index') }}" class="btn btn-secondary">Back</a>
+            <button class="btn btn-primary" onclick="window.print()">Print</button>
+        </div>
     </div>
 
-    <div class="row g-3">
+    <div class="row g-4">
         <div class="col-lg-8">
             <div class="card">
                 <div class="table-responsive">
-                    <table class="table table-sm mb-0">
+                    <table class="table mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>{{ __('Product') }}</th>
-                                <th class="text-end">{{ __('Qty') }}</th>
-                                <th class="text-end">{{ __('Price') }}</th>
-                                <th class="text-end">{{ __('Total') }}</th>
+                                <th>Product</th>
+                                <th class="text-end">Qty</th>
+                                <th class="text-end">Price</th>
+                                <th class="text-end">Total</th>
                             </tr>
                         </thead>
 
@@ -40,55 +63,48 @@
             <div class="card">
                 <div class="card-body">
                     <div class="d-flex justify-content-between">
-                        <span>{{ __('Subtotal') }}</span>
+                        <span>Subtotal</span>
                         <strong>Rp {{ number_format($sale->subtotal,0,',','.') }}</strong>
                     </div>
 
                     <div class="d-flex justify-content-between text-secondary">
-                        <span>{{ __('Discount') }}</span>
+                        <span>Discount</span>
                         <span>Rp {{ number_format($sale->discount,0,',','.') }}</span>
                     </div>
 
-                    <div class="d-flex justify-content-between text-secondary">
-                        <span>{{ __('Tax') }}</span>
+                    <div class="d-flex justify-content-between text-secondary mb-1">
+                        <span>Tax</span>
                         <span>Rp {{ number_format($sale->tax,0,',','.') }}</span>
                     </div>
 
                     <hr>
-                    <div class="d-flex justify-content-between fs-5">
-                        <span>{{ __('Total') }}</span>
+                    <div class="d-flex justify-content-between fs-5 mb-2">
+                        <span>Total</span>
                         <strong>Rp {{ number_format($sale->total,0,',','.') }}</strong>
                     </div>
 
                     <div class="d-flex justify-content-between mt-2">
-                        <span>{{ __('Paid') }}</span>
+                        <span>Paid</span>
                         <span>Rp {{ number_format($sale->paid,0,',','.') }}</span>
                     </div>
 
                     <div class="d-flex justify-content-between">
-                        <span>{{ __('Change') }}</span>
-                        <span>Rp {{ number_format($sale->change,0,',','.') }}</span>
-                    </div>
-
-                    <div class="mt-2">
-                        <span
-                            class="badge {{ $sale->status=='paid' ? 'bg-success-subtle text-success-emphasis':'bg-secondary-subtle text-secondary-emphasis' }}">
-                            {{ ucfirst(__($sale->status)) }}
-                        </span>
+                        <span>Change</span>
+                        <span class="text-success fw-bold">{{ number_format($sale->change, 0, ',', '.') }}</span>
                     </div>
                 </div>
             </div>
 
-            <div class="card mt-3">
-                <div class="card-header">{{ __('Payments') }}</div>
+            <div class="card mt-4">
+                <div class="card-header">Payments</div>
                 <ul class="list-group list-group-flush">
                     @forelse($sale->payments as $p)
                     <li class="list-group-item d-flex justify-content-between">
-                        <span>{{ strtoupper(__(ucfirst($p->method))) }}</span>
+                        <span>{{ strtoupper($p->method) }}</span>
                         <strong>Rp {{ number_format($p->amount,0,',','.') }}</strong>
                     </li>
                     @empty
-                    <li class="list-group-item text-secondary">{{ __('No payments.') }}</li>
+                    <li class="list-group-item text-secondary">No payments.</li>
                     @endforelse
                 </ul>
             </div>

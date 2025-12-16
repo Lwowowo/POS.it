@@ -1,113 +1,167 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-3xl mx-auto p-6 space-y-4">
+<div class="container py-4">
     @if (session('ok'))
-    <div class="p-3 bg-green-50 border border-green-200 rounded">{{ session('ok') }}</div>
+    <div class="alert alert-success border-0 shadow-sm mb-4" role="alert">
+        <i class="bi bi-check-circle me-2"></i>{{ session('ok') }}
+    </div>
     @endif
 
-    @if (session('error'))
-    <div class="p-3 bg-red-50 border border-red-200 rounded">{{ session('error') }}</div>
-    @endif
+    {{-- Product Header --}}
+    <div class="card shadow-sm mb-4">
+        <div class="card-body p-4">
+            <div class="d-flex align-items-start gap-4">
 
-    <div class="flex items-start justify-between">
-        <div class="flex gap-4">
-            @if($product->image_path)
-            <img src="{{ Storage::url($product->image_path) }}" class="h-20 w-20 rounded object-cover"
-                alt="{{ $product->name }}">
-            @else
-            <div class="h-20 w-20 rounded bg-gray-200 grid place-items-center text-gray-500 text-xs">IMG</div>
-            @endif
-
-            <div>
-                <h1 class="text-2xl font-bold">{{ $product->name }}</h1>
-                @if($product->sku)
-                <div class="text-gray-600">{{ __('SKU') }}: {{ $product->sku }}</div>
-                @endif
-
-                <div class="text-gray-600 capitalize">{{ __('Type') }}: {{ $product->type }}</div>
-
-                @if($product->category)
-                <div class="text-gray-600">{{ __('Category') }}: {{ $product->category->name }}</div>
-                @endif
-
-                <div>{{ __('Price') }}: <b>Rp {{ number_format($product->selling_price,2,',','.') }}</b></div>
-
-                <div class="mt-2">
-                    Status:
-                    <span
-                        class="px-2 py-0.5 rounded {{ $product->is_active ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-700' }}">
-                        {{ $product->is_active ? __('Active') : __('Inactive') }}
-                    </span>
+                {{-- Image --}}
+                <div class="flex-shrink-0">
+                    @if($product->image_path)
+                    <img src="{{ Storage::url($product->image_path) }}"
+                        class="rounded object-fit-cover border border-secondary-subtle"
+                        style="width: 100px; height: 100px;" alt="{{ $product->name }}">
+                    @else
+                    <div class="rounded bg-secondary-subtle d-flex align-items-center justify-content-center text-secondary small fw-bold"
+                        style="width: 100px; height: 100px;">
+                        IMG
+                    </div>
+                    @endif
                 </div>
 
+                {{-- Info Text --}}
+                <div class="flex-grow-1">
+                    <h1 class="h3 fw-bold mb-2">{{ $product->name }}</h1>
+
+                    <div class="d-flex flex-wrap gap-3 text-secondary small mb-3">
+                        <div>SKU: <strong class="text-body">{{ $product->sku ?? '-' }}</strong></div>
+                        <div class="vr opacity-25"></div>
+                        <div class="text-capitalize">Type: <strong class="text-body">{{ $product->type }}</strong></div>
+                        <div class="vr opacity-25"></div>
+                        <div>Category: <strong class="text-body">{{ $product->category->name ?? 'None' }}</strong></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <span class="fs-4 fw-bold text-primary">Rp {{ number_format($product->selling_price, 2, ',', '.') }}</span>
+                    </div>
+
+                    {{-- Status Badge --}}
+                    <div>
+                        <span class="badge {{ $product->is_active ? 'bg-success-subtle text-success-emphasis' : 'bg-secondary-subtle text-secondary-emphasis' }} border border-opacity-10">
+                            {{ $product->is_active ? 'Active' : 'Inactive' }}
+                        </span>
+                    </div>
+                </div>
+
+                {{-- Action Button --}}
+                <div class="ms-auto d-flex flex-column gap-2">
+                    <a href="{{ route('admin.products.edit', $product) }}" class="btn btn-sm btn-outline-primary fw-bold">
+                        <i class="bi bi-pencil me-1"></i> Edit Product
+                    </a>
+                    
+                    @if($product->isComposite())
+                    <a href="{{ route('admin.products.bom.edit', $product) }}" class="btn btn-sm btn-outline-secondary fw-bold">
+                        <i class="bi bi-list-check me-1"></i> Manage BOM
+                    </a>
+                    @endif
+                </div>
             </div>
         </div>
+    </div>
 
-        <div class="space-x-2">
+    <div class="row g-4">
+        {{-- Detail / BOM --}}
+        <div class="col-lg-8">
+            
             @if($product->isComposite())
-            <a href="{{ route('admin.products.bom.edit', $product) }}"
-                class="px-3 py-2 border rounded">{{ __('Edit BOM') }}</a>
+            {{-- Composite BOM Table --}}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-transparent py-3">
+                    <h5 class="card-title mb-0 fw-bold">Bill of Materials (Recipe)</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">Component Item</th>
+                                <th class="text-end pe-4">Qty Required</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($product->bomLines as $line)
+                            <tr>
+                                <td class="ps-4">
+                                    <a href="{{ route('admin.items.show', $line->item) }}" class="text-decoration-none fw-medium">
+                                        {{ $line->item->name }}
+                                    </a>
+                                </td>
+                                <td class="text-end pe-4 font-monospace">
+                                    {{ rtrim(rtrim(number_format($line->qty, 3, '.', ''), '0'), '.') }} 
+                                    <span class="text-secondary small">{{ $line->item->base_unit }}</span>
+                                </td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="2" class="text-center text-secondary py-4 fst-italic">
+                                    No ingredients/components defined yet.
+                                </td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            @else
+            {{-- Simple Product Detail --}}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-transparent py-3">
+                    <h5 class="card-title mb-0 fw-bold">Inventory Link</h5>
+                </div>
+                <div class="card-body">
+                    @if($product->item)
+                        <p class="mb-1 text-secondary">Linked to stock item:</p>
+                        <div class="d-flex align-items-center p-3 border rounded bg-body-tertiary">
+                            <div class="flex-grow-1">
+                                <a href="{{ route('admin.items.show', $product->item) }}" class="fw-bold text-decoration-none">
+                                    {{ $product->item->name }}
+                                </a>
+                                <div class="small text-secondary">
+                                    Current Stock: {{ $product->item->current_qty }} {{ $product->item->base_unit }}
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <div class="small text-secondary">Deducts per sale:</div>
+                                <div class="font-monospace fw-bold">{{ $product->per_sale_qty + 0 }} {{ $product->item->base_unit }}</div>
+                            </div>
+                        </div>
+                    @else
+                        <div class="text-warning">
+                            <i class="bi bi-exclamation-triangle me-1"></i> This product is not linked to any inventory item.
+                        </div>
+                    @endif
+                </div>
+            </div>
             @endif
-            <a href="{{ route('admin.products.edit', $product) }}" class="px-3 py-2 border rounded">{{ __('Edit') }}</a>
-            <form action="{{ route('admin.products.toggle', $product) }}" method="POST" class="inline">
-                @csrf
-                @method('PATCH')
-                <button
-                    class="px-3 py-2 border rounded">{{ $product->is_active ? __('Deactivate') : __('Activate') }}</button>
-            </form>
+
+        </div>
+
+        {{-- Side Panel (Stats maybe?) --}}
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-transparent py-3">
+                    <h6 class="fw-bold mb-0 text-secondary">Info</h6>
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-secondary">Created At</span>
+                        <span class="font-monospace">{{ $product->created_at->format('d M Y') }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-secondary">Last Updated</span>
+                        <span class="font-monospace">{{ $product->updated_at->format('d M Y') }}</span>
+                    </li>
+                </ul>
+            </div>
         </div>
     </div>
-
-    <div class="bg-yellow-50 border border-yellow-200 rounded p-3">
-        <div class="font-medium">
-            {{ __('Estimated Cost: Rp :cost', ['cost' => number_format($estimatedCost,2,',','.')]) }}</div>
-        <div>
-            {{ __('Margin (est.): Rp :margin', ['margin' => number_format($product->selling_price - $estimatedCost,2,',','.')]) }}
-        </div>
-        @if($product->selling_price < $estimatedCost) <div class="text-red-600 mt-1">
-            {{ __('Warning: Selling price is below estimated cost.') }}
-    </div>
-    @endif
-</div>
-
-@if($product->isSimple() && $product->linkedItem)
-<div class="bg-white rounded shadow p-4">
-    <h2 class="font-semibold mb-2">{{ __('Linked Item') }}</h2>
-    <div>{{ $product->linkedItem->name }} — {{ __('per sale qty') }}:
-        <b>{{ rtrim(rtrim(number_format($product->per_sale_qty,3,'.',''), '0'), '.') }}
-            {{ $product->linkedItem->base_unit }}</b>
-    </div>
-</div>
-@endif
-
-@if($product->isComposite())
-<div class="bg-white rounded shadow p-4">
-    <h2 class="font-semibold mb-2">{{ __('BOM Lines') }}</h2>
-    <table class="min-w-full">
-
-        <thead class="bg-gray-50">
-            <tr>
-                <th class="text-left p-2">{{ __('Item') }}</th>
-                <th class="text-right p-2">{{ __('Qty') }}</th>
-            </tr>
-        </thead>
-
-        <tbody>
-            @forelse($product->bomLines as $line)
-            <tr class="border-t">
-                <td class="p-2">{{ $line->item->name }} ({{ $line->item->base_unit }})</td>
-                <td class="p-2 text-right">{{ rtrim(rtrim(number_format($line->qty,3,'.',''), '0'), '.') }}</td>
-            </tr>
-            @empty
-            <tr>
-                <td colspan="2" class="p-3 text-center text-gray-500">{{ __('No BOM lines.') }}</td>
-            </tr>
-            @endforelse
-        </tbody>
-
-    </table>
-</div>
-@endif
 </div>
 @endsection

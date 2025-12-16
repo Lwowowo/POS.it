@@ -3,7 +3,7 @@
 @section('content')
 <div class="container-xxl py-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h1 class="h5 mb-0">{{ __('Cart') }}</h1>
+        <h1 class="h5 mb-1">{{ __('Cart') }}</h1>
         <form action="{{ route('employee.sales.cart.clear') }}" method="post" onsubmit="return confirm('Clear cart?')">
             @csrf
             @method('DELETE')
@@ -13,7 +13,7 @@
 
     <div class="card">
         <div class="table-responsive">
-            <table class="table table-sm align-middle mb-0">
+            <table class="table align-middle mb-0">
                 <thead class="table-light">
                     <tr>
                         <th>{{ __('Product') }}</th>
@@ -68,7 +68,7 @@
         </div>
 
         <div class="card-body d-flex justify-content-end gap-3">
-            <div class="fs-6">
+            <div class="fs-7">
                 <strong>{{ __('Total') }}:</strong>
                 Rp {{ number_format($totals['total'] ?? 0, 0, ',', '.') }}
             </div>

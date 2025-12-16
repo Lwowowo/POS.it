@@ -1,33 +1,73 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-md mx-auto p-6 space-y-4">
-    <h1 class="text-2xl font-bold">{{ __('New Category') }}</h1>
+<div class="container py-5">
 
-    @if ($errors->any())
-    <div class="p-3 bg-red-50 border border-red-200 rounded"></div>
-    <ul class="list-disc pl-5 text-sm">
-        @foreach($errors->all() as $e)
-        <li>{{ $e }}</li>
-        @endforeach
-    </ul>
-    @endif
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
 
-    <form action="{{ route('admin.categories.store') }}" method="POST" class="space-y-3">
-        @csrf
-        <input name="name" class="border p-2 rounded w-full" placeholder="{{ __('Name') }}" value="{{ old('name') }}"
-            required>
-        <input name="sort_order" type="number" class="border p-2 rounded w-full"
-            placeholder="{{ __('Sort order (0..)') }}">
-        <label class="inline-flex items-center gap-2">
-            <input type="checkbox" name="is_active" value="1" checked>
-            <span>{{ __('Active') }}</span>
-        </label>
+            <div class="card shadow-lg border-0 rounded-3">
 
-        <div class="text-right">
-            <a href="{{ route('admin.categories.index') }}" class="px-4 py-2 border rounded">{{ __('Cancel') }}</a>
-            <button class="px-4 py-2 bg-indigo-600 text-white rounded">{{ __('Save') }}</button>
+                <div class="card-header border-bottom py-3 bg-white rounded-top-3">
+                    <h4 class="mb-0 fw-bold fs-5">{{ __('New Category') }}</h4>
+                </div>
+
+                <div class="card-body p-4">
+
+                    @if ($errors->any())
+                    <div class="alert alert-danger">
+                        <ul class="mb-0 ps-3">
+                            @foreach($errors->all() as $e)
+                            <li>{{ $e }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                    @endif
+
+                    <form action="{{ route('admin.categories.store') }}" method="POST">
+                        @csrf
+
+                        <div class="mb-3">
+                            <label class="form-label ms-1">{{ __('Name') }}</label>
+                            <div class="w-full">
+                                <input name="name" type="text" class="form-control rounded-3 px-3"
+                                    placeholder="{{ __('Category Name') }}" value="{{ old('name') }}" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label ms-1">{{ __('Order') }}</label>
+                            <div class="w-full">
+                                <input name="sort_order" type="number" class="form-control rounded-3 px-3"
+                                    placeholder="0" value="{{ old('sort_order') }}">
+                            </div>
+                        </div>
+
+                        <div class="form-check mb-4 ms-1">
+                            <input class="form-check-input" type="checkbox" name="is_active" value="1"
+                                id="isActiveCheck" checked>
+                            <label class="form-check-label" for="isActiveCheck">
+                                {{ __('Active') }}
+                            </label>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{{ route('admin.categories.index') }}"
+                                class="btn btn-secondary fw-bold rounded-3 px-4">
+                                {{ __('Cancel') }}
+                            </a>
+                            <button type="submit" class="btn btn-primary fw-bold rounded-3 px-4">
+                                {{ __('Save') }}
+                            </button>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+
         </div>
-    </form>
+    </div>
 </div>
 @endsection

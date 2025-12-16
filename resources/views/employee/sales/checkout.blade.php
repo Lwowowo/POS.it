@@ -1,13 +1,18 @@
 @extends('layouts.app')
 @section('content')
 <div class="container-xxl py-4">
-    <h1 class="h5 mb-3">{{ __('Checkout') }}</h1>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h4 fw-bold mb-0 text-body">{{ __('Checkout') }}</h1>
+        <a href="{{ route('employee.sales.cart.show') }}" class="btn btn-secondary d-flex align-items-center gap-2">
+            {{ __('Back to Cart') }}
+        </a>
+    </div>
 
     <div class="row g-3">
         <div class="col-lg-8">
             <div class="card">
                 <div class="table-responsive">
-                    <table class="table table-sm mb-0">
+                    <table class="table mb-0">
                         <thead class="table-light">
                             <tr>
                                 <th>{{ __('Product') }}</th>

@@ -1,188 +1,223 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-5xl mx-auto p-6 space-y-6">
-
+<div class="container py-4">
     @if (session('ok'))
-    <div class="p-3 bg-green-50 border border-green-200 rounded">{{ session('ok') }}</div>
+        <div class="alert alert-success border-0 shadow-sm mb-4" role="alert">
+            <i class="bi bi-check-circle me-2"></i>{{ session('ok') }}
+        </div>
     @endif
 
     @if ($errors->any())
-    <div class="p-3 bg-red-50 border border-red-200 rounded">
-        <ul class="list-disc pl-5 text-sm">
-            @foreach ($errors->all() as $e)
-            <li>{{ $e }}</li>
-            @endforeach
-        </ul>
-    </div>
+        <div class="alert alert-danger border-0 shadow-sm mb-4" role="alert">
+            <ul class="mb-0 ps-3">
+                @foreach ($errors->all() as $e) 
+                    <li>{{ $e }}</li> 
+                @endforeach
+            </ul>
+        </div>
     @endif
 
-    <div class="bg-white rounded-2xl shadow-sm ring-1 ring-gray-200 p-6">
-        <div class="flex items-start gap-4">
-            @if($item->image_path)
-            <img src="{{ Storage::url($item->image_path) }}" class="h-20 w-20 rounded object-cover"
-                alt="{{ $item->name }}">
-            @else
-            <div class="h-20 w-20 rounded bg-gray-200 grid place-items-center text-gray-500 text-xs">IMG</div>
-            @endif
-
-            <div class="min-w-0">
-                <h1 class="text-2xl font-bold">{{ $item->name }}</h1>
-                <div class="text-gray-600 text-sm">{{ __('Base unit') }}: <b>{{ $item->base_unit }}</b></div>
-                <div class="text-gray-600 text-sm">{{ __('Current stock') }}:
-                    <b>{{ rtrim(rtrim(number_format($item->current_qty,3,'.',''), '0'), '.') }}
-                        {{ $item->base_unit }}</b>
+    {{-- Item --}}
+    <div class="card shadow-sm mb-4">
+        <div class="card-body p-4">
+            <div class="d-flex align-items-start gap-4">
+                
+                {{-- Image --}}
+                <div class="flex-shrink-0">
+                    @if($item->image_path)
+                        <img src="{{ Storage::url($item->image_path) }}" 
+                             class="rounded object-fit-cover border border-secondary-subtle" 
+                             style="width: 80px; height: 80px;" 
+                             alt="{{ $item->name }}">
+                    @else
+                        <div class="rounded bg-secondary-subtle d-flex align-items-center justify-content-center text-secondary small fw-bold" 
+                             style="width: 80px; height: 80px;">
+                            IMG
+                        </div>
+                    @endif
                 </div>
-                <div class="text-gray-600 text-sm">{{ __('Low stock threshold') }}:
-                    <b>{{ rtrim(rtrim(number_format($item->low_stock_threshold,3,'.',''), '0'), '.') }}</b>
-                </div>
-                <div class="mt-2">
-                    <span
-                        class="px-2 py-0.5 rounded {{ $item->is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-200 text-gray-700' }}">
-                        {{ $item->is_active ? __('Active') : __('Inactive') }}
 
-                    </span>
-                </div>
-            </div>
-
-            <div class="ml-auto">
-                <form action="{{ route('admin.items.toggle',$item) }}" method="POST">@csrf @method('PATCH')
-                    <button
-                        class="px-3 py-2 text-sm border rounded">{{ $item->is_active ? __('Deactivate') : __('Activate') }}</button>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-        {{-- Lots table --}}
-        <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm ring-1 ring-gray-200">
-            <div class="px-6 py-4 border-b bg-slate-50">
-                <h2 class="font-semibold">{{ __('Lots') }}</h2>
-                <p class="text-sm text-gray-500">{{ __('FEFO: earliest expiry consumed first.') }}</p>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="min-w-full text-sm">
-                    <thead class="bg-gray-50 text-gray-600 uppercase tracking-wide">
-                        <tr>
-                            <th class="text-left p-3.5">{{ __('Expiry') }}</th>
-                            <th class="text-right p-3.5">{{ __('Qty') }}</th>
-                            <th class="text-left p-3.5">{{ __('Note') }}</th>
-                        </tr>
-                    </thead>
-
-                    <tbody class="divide-y">
-                        @forelse($item->lots()->orderByRaw('expiry_date IS NULL')->orderBy('expiry_date')->get() as $lot)
-                        @php $expired = $lot->expiry_date && $lot->expiry_date->lte(now()); @endphp
-                        <tr class="{{ $expired ? 'bg-rose-50' : '' }}">
-                            <td class="p-3.5">
-                                @if($lot->expiry_date)
-                                {{ $lot->expiry_date->format('Y-m-d') }}
-                                @if(!$expired)
-                                <span class="ml-2 text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
-                                    {{ __('days_left', ['count' => ceil(now()->diffInDays($lot->expiry_date, false))]) }}
-                                </span>
-                                @else
-                                <span
-                                    class="ml-2 text-[10px] px-2 py-0.5 rounded-full bg-rose-100 text-rose-700">{{ __('Expired') }}</span>
-                                @endif
-                                @else
-                                <span class="text-gray-500">{{ __('No expiry') }}</span>
-                                @endif
-                            </td>
-                            <td class="p-3.5 text-right">
-                                {{ rtrim(rtrim(number_format($lot->qty,3,'.',''), '0'), '.') }} {{ $item->base_unit }}
-                            </td>
-                            <td class="p-3.5">{{ $lot->note }}</td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="3" class="p-6 text-center text-gray-500">{{ __('No lots yet.') }}</td>
-                        </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        {{-- Stock actions --}}
-        <div class="space-y-6">
-            <div class="bg-white rounded-2xl shadow-sm ring-1 ring-gray-200 p-6">
-                <h3 class="font-semibold mb-3">{{ __('Restock') }}</h3>
-                <form action="{{ route('admin.items.restock',$item) }}" method="POST" class="space-y-3">
-                    @csrf
-                    <div class="grid grid-cols-2 gap-3">
-                        <input type="number" name="qty" step="0.001" min="0.001" class="border p-2 rounded"
-                            placeholder="Qty" required>
-                        <select name="unit" class="border p-2 rounded" required>
-                            <option value="g">g</option>
-                            <option value="kg">kg</option>
-                            <option value="ml">ml</option>
-                            <option value="L">L</option>
-                            <option value="pcs">pcs</option>
-                        </select>
+                {{-- Info Text --}}
+                <div class="flex-grow-1">
+                    <h1 class="h3 fw-bold mb-2">{{ $item->name }}</h1>
+                    
+                    <div class="d-flex flex-wrap gap-3 text-secondary small mb-2">
+                        <div>{{ __('Base Unit') }}: <strong class="text-body">{{ $item->base_unit }}</strong></div>
+                        <div class="vr opacity-25"></div>
+                        <div>{{ __('Current Stock') }}: <strong class="text-body">{{ rtrim(rtrim(number_format($item->current_qty,3,'.',''), '0'), '.') }} {{ $item->base_unit }}</strong></div>
+                        <div class="vr opacity-25"></div>
+                        <div>{{ __('Threshold') }}: <strong class="text-body">{{ rtrim(rtrim(number_format($item->low_stock_threshold,3,'.',''), '0'), '.') }}</strong></div>
                     </div>
 
+                    {{-- Status Badge --}}
                     <div>
-                        <label class="block text-sm text-gray-600 mb-1">{{ __('Expiry Date (optional)') }}</label>
-                        <input type="date" name="expiry_date" class="border p-2 rounded w-full">
+                        <span class="badge {{ $item->is_active ? 'bg-success-subtle text-success-emphasis' : 'bg-secondary-subtle text-secondary-emphasis' }} border border-opacity-10">
+                            {{ $item->is_active ? __('Active') : __('Inactive') }}
+                        </span>
                     </div>
+                </div>
 
-                    <input type="text" name="note" class="border p-2 rounded w-full" placeholder="Note (optional)">
-                    <button class="w-full px-3 py-2 bg-emerald-600 text-white rounded">{{ __('Add Stock') }}</button>
-                </form>
-            </div>
-
-            <div class="bg-white rounded-2xl shadow-sm ring-1 ring-gray-200 p-6">
-                <h3 class="font-semibold mb-3">{{ __('Adjust (+/−)') }}</h3>
-                <form action="{{ route('admin.items.adjust',$item) }}" method="POST" class="space-y-3">
-                    @csrf
-                    <div class="grid grid-cols-2 gap-3">
-                        <input type="number" name="qty" step="0.001" class="border p-2 rounded" placeholder="+10 or -5"
-                            required>
-                        <select name="unit" class="border p-2 rounded" required>
-                            <option value="g">g</option>
-                            <option value="kg">kg</option>
-                            <option value="ml">ml</option>
-                            <option value="L">L</option>
-                            <option value="pcs">pcs</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm text-gray-600 mb-1">{{ __('Expiry (only for +)') }}</label>
-                        <input type="date" name="expiry_date" class="border p-2 rounded w-full">
-                    </div>
-                    <input type="text" name="note" class="border p-2 rounded w-full"
-                        placeholder="{{ __('Reason (optional)') }}">
-                    <button class="w-full px-3 py-2 bg-slate-700 text-white rounded">{{ __('Apply Adjust') }}</button>
-                </form>
+                {{-- Action Button --}}
+                <div class="ms-auto">
+                    <form action="{{ route('admin.items.toggle',$item) }}" method="POST">
+                        @csrf @method('PATCH')
+                        <button class="btn btn-sm btn-outline-danger">
+                            {{ $item->is_active ? __('Deactivate') : __('Activate') }}
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
 
-    {{-- Movements (recent) --}}
-    <div class="bg-white rounded-2xl shadow-sm ring-1 ring-gray-200">
-        <div class="px-6 py-4 border-b bg-slate-50">
-            <h2 class="font-semibold">{{ __('Recent Movements') }}</h2>
-        </div>
-        <div class="divide-y">
-            @foreach($movements as $mv)
-            <div class="px-6 py-3 flex items-center justify-between">
-                <div>
-                    <div class="text-sm text-gray-500">{{ $mv->created_at->format('Y-m-d H:i') }} •
-                        {{ ucfirst($mv->reason) }}</div>
-                    @if($mv->note) <div class="text-sm">{{ $mv->note }}</div> @endif
+    {{-- Lots (FEFO) --}}
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4 pb-3">
+                <div class="card-header bg-transparent py-3">
+                    <h5 class="card-title mb-0 fw-bold">{{ __('Lots (FEFO)') }}</h5>
+                    <small class="text-secondary">{{ __('Earliest expiry consumed first.') }}</small>
                 </div>
-                <div class="font-mono {{ $mv->change_qty < 0 ? 'text-rose-600' : 'text-emerald-700' }}">
-                    {{ $mv->change_qty > 0 ? '+' : '' }}
-                    {{ rtrim(rtrim(number_format($mv->change_qty,3,'.',''), '0'), '.') }} {{ $item->base_unit }}
+                
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-3 py-2">{{ __('Expiry') }}</th>
+                                <th class="text-end py-2">{{ __('Qty') }}</th>
+                                <th class="ps-3 py-2">{{ __('Note') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($item->lots()->orderByRaw('expiry_date IS NULL')->orderBy('expiry_date')->get() as $lot)
+                                @php $expired = $lot->expiry_date && $lot->expiry_date->lte(now()); @endphp
+                                <tr class="{{ $expired ? 'table-danger' : '' }}">
+                                    <td class="ps-3">
+                                        @if($lot->expiry_date)
+                                            <span class="fw-medium">{{ $lot->expiry_date->format('Y-m-d') }}</span>
+                                            
+                                            @if(!$expired)
+                                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle ms-2">
+                                                    {{ (int) ceil(now()->floatDiffInDays($lot->expiry_date, false)) }} {{ __('d left') }}
+                                                </span>
+                                            @else
+                                                <span class="badge bg-danger text-white ms-2">{{ __('Expired') }}</span>
+                                            @endif
+                                        @else
+                                            <span class="text-secondary fst-italic">{{ __('No expiry') }}</span>
+                                        @endif
+                                    </td>
+                                    <td class="text-end font-monospace">
+                                        {{ rtrim(rtrim(number_format($lot->qty,3,'.',''), '0'), '.') }} {{ $item->base_unit }}
+                                    </td>
+                                    <td class="ps-3 text-secondary small">{{ $lot->note ?? '-' }}</td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="3" class="text-center text-secondary py-4">{{ __('No lots available.') }}</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
             </div>
-            @endforeach
+
+            {{-- Recent Movements --}}
+            <div class="card shadow-sm">
+                <div class="card-header bg-transparent py-3">
+                    <h5 class="card-title mb-0 fw-bold">{{ __('Recent Movements') }}</h5>
+                </div>
+                <ul class="list-group list-group-flush">
+                    @foreach($movements as $mv)
+                        <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+                            <div>
+                                <div class="small text-secondary mb-1">
+                                    {{ $mv->created_at->format('Y-m-d H:i') }} • 
+                                    <span class="fw-medium text-body">{{ __(ucfirst($mv->reason)) }}</span>
+                                </div>
+                                @if($mv->note) 
+                                    <div class="small text-body-secondary">{{ $mv->note }}</div> 
+                                @endif
+                            </div>
+                            <div class="font-monospace fw-bold {{ $mv->change_qty < 0 ? 'text-danger' : 'text-success' }}">
+                                {{ $mv->change_qty > 0 ? '+' : '' }}{{ rtrim(rtrim(number_format($mv->change_qty,3,'.',''), '0'), '.') }} {{ $item->base_unit }}
+                            </div>
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+        </div>
+
+        {{-- Restock Items --}}
+        <div class="col-lg-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-transparent py-3 border-bottom-0">
+                    <h6 class="fw-bold mb-0 text-success"><i class="bi bi-box-seam me-2"></i>{{ __('Restock Item') }}</h6>
+                </div>
+                <div class="card-body pt-0">
+                    <form action="{{ route('admin.items.restock',$item) }}" method="POST">
+                        @csrf
+                        
+                        <div class="input-group mb-3">
+                            <input type="number" name="qty" step="0.001" min="0.001" class="form-control" placeholder="{{ __('Qty') }}" required>
+                            <select name="unit" class="form-select" style="max-width: 80px;" required>
+                                <option value="g">g</option>
+                                <option value="kg">kg</option>
+                                <option value="ml">ml</option>
+                                <option value="L">L</option>
+                                <option value="pcs">pcs</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small text-secondary">{{ __('Expiry Date (optional)') }}</label>
+                            <input type="date" name="expiry_date" class="form-control">
+                        </div>
+
+                        <div class="mb-3">
+                            <input type="text" name="note" class="form-control" placeholder="{{ __('Note (optional)') }}">
+                        </div>
+
+                        <button class="btn btn-success w-100">{{ __('Add Stock') }}</button>
+                    </form>
+                </div>
+            </div>
+
+            {{-- Adjust Stock --}}
+            <div class="card shadow-sm">
+                <div class="card-header bg-transparent py-3 border-bottom-0">
+                    <h6 class="fw-bold mb-0 text-secondary"><i class="bi bi-sliders me-2"></i>{{ __('Adjust Stock (+/-)') }}</h6>
+                </div>
+                <div class="card-body pt-0">
+                    <form action="{{ route('admin.items.adjust',$item) }}" method="POST">
+                        @csrf
+                        
+                        <div class="input-group mb-3">
+                            <input type="number" name="qty" step="0.001" class="form-control" placeholder="{{ __('+10 or -5') }}" required>
+                            <select name="unit" class="form-select" style="max-width: 80px;" required>
+                                <option value="g">g</option>
+                                <option value="kg">kg</option>
+                                <option value="ml">ml</option>
+                                <option value="L">L</option>
+                                <option value="pcs">pcs</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small text-secondary">{{ __('Expiry (only for +)') }}</label>
+                            <input type="date" name="expiry_date" class="form-control">
+                        </div>
+
+                        <div class="mb-3">
+                            <input type="text" name="note" class="form-control" placeholder="{{ __('Reason (optional)') }}">
+                        </div>
+
+                        <button class="btn btn-secondary w-100">{{ __('Apply Adjust') }}</button>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
-
 </div>
 @endsection

@@ -1,5 +1,6 @@
 @if(Auth::check() && Auth::user()->role === 'admin')
-<nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+<nav class="navbar navbar-expand-lg border-bottom" :class="darkMode ? 'navbar-dark bg-dark' : 'navbar-light bg-light'">
+
     <div class="container-fluid">
 
         {{-- Logo --}}
@@ -52,6 +53,14 @@
 
             {{-- Right Side: User Menu --}}
             <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                {{-- Toggle Dark Mode --}}
+                <li class="nav-item d-flex align-items-center me-2">
+                    <button type="button" @click="darkMode = !darkMode" class="btn btn-sm btn-outline-secondary"
+                        :title="darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
+                        <span x-show="!darkMode">🌙</span>
+                        <span x-show="darkMode">☀️</span>
+                    </button>
+                </li>
 
                 {{-- Language Dropdown --}}
                 <li class="nav-item dropdown">

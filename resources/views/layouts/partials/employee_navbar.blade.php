@@ -27,19 +27,19 @@
                     </a>
                 </li>
 
-                {{-- 2. Cashier (Kasir) --}}
+                {{-- 2. Cart (Keranjang) --}}
                 <li class="nav-item">
                     <a class="nav-link {{ request()->routeIs('employee.sales.catalog') ? 'active' : '' }}"
-                        href="{{ route('employee.sales.catalog') }}">
-                        {{ __('Cashier') }}
+                        href="{{ route('employee.sales.cart.show') }}">
+                        {{ __('Cart') }}
                     </a>
                 </li>
 
-                {{-- 3. Check Stock (Cek Stok) --}}
+                {{-- 3. Products (Cek Stok) --}}
                 <li class="nav-item">
                     <a class="nav-link {{ request()->routeIs('employee.items.index') ? 'active' : '' }}"
-                        href="{{ route('employee.items.index') }}">
-                        {{ __('Check Stock') }}
+                        href="{{ route('employee.sales.catalog') }}">
+                        {{ __('Products') }}
                     </a>
                 </li>
 
@@ -54,6 +54,15 @@
             </ul>
 
             <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                {{-- Toggle Dark Mode  --}}
+                <li class="nav-item me-2">
+                    <button type="button" @click="darkMode = !darkMode" class="btn btn-sm btn-outline-secondary"
+                        :title="darkMode ? 'Light Mode' : 'Dark Mode'">
+
+                        <span x-show="!darkMode">🌙</span>
+                        <span x-show="darkMode">☀️</span>
+                    </button>
+                </li>
 
                 {{-- Language Dropdown --}}
                 <li class="nav-item dropdown">
