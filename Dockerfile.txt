@@ -1,5 +1,5 @@
-# Use PHP-FPM instead of CLI
-FROM php:8.2-fpm
+# Base image with PHP CLI
+FROM php:8.2-cli
 
 # System dependencies
 RUN apt-get update && apt-get install -y \
@@ -13,11 +13,13 @@ RUN apt-get update && apt-get install -y \
 # PHP extensions
 RUN docker-php-ext-install pdo_mysql mysqli bcmath intl
 
-# Composer
+# Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 # Set working directory
 WORKDIR /app
+
+# Copy project files
 COPY . .
 
 # Install PHP dependencies
@@ -27,11 +29,11 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction
 RUN npm install
 RUN npm run build
 
-# Ensure permissions
+# Ensure storage and cache directories are writable
 RUN chown -R www-data:www-data storage bootstrap/cache
 
-# Expose port (Railway provides $PORT at runtime)
+# Expose port (Railway provides $PORT)
 EXPOSE 8000
 
-# Use PHP-FPM and let Railway route requests
-CMD ["php-fpm"]
+# Serve Laravel on the Railway port
+CMD php -S 0.0.0.0:$PORT -t public
