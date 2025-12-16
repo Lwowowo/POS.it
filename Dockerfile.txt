@@ -1,27 +1,37 @@
-FROM php:8.2-cli
+# Use PHP-FPM instead of CLI
+FROM php:8.2-fpm
 
 # System dependencies
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
     libicu-dev \
+    nodejs \
+    npm \
     && rm -rf /var/lib/apt/lists/*
 
 # PHP extensions
-RUN docker-php-ext-install \
-    pdo_mysql \
-    mysqli \
-    bcmath \
-    intl
+RUN docker-php-ext-install pdo_mysql mysqli bcmath intl
 
 # Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
+# Set working directory
 WORKDIR /app
 COPY . .
 
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-# Railway provides $PORT
-CMD php artisan serve --host=0.0.0.0 --port=$PORT
+# Install Node dependencies and build Vite assets
+RUN npm install
+RUN npm run build
+
+# Ensure permissions
+RUN chown -R www-data:www-data storage bootstrap/cache
+
+# Expose port (Railway provides $PORT at runtime)
+EXPOSE 8000
+
+# Use PHP-FPM and let Railway route requests
+CMD ["php-fpm"]
